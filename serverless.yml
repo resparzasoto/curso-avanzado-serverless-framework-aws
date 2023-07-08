@@ -1,0 +1,151 @@
+service: crud-serverless-users
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
+provider:
+  name: aws
+  stage: dev
+  region: us-east-1
+  runtime: nodejs16.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: !GetAtt UsersDynamoDBTable.Arn
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      docker: true
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+      noStart: true
+    migration:
+      dir: offline/migrations
+    seed:
+      initial:
+        sources:
+          - table: Users
+            sources: [./dynamodb/offline/seeds/users.json]
+
+package:
+  individually: true
+  patterns:
+    - "!.venv"
+    - "!.vscode"
+    - "!dynamodb"
+    - "!createUsers"
+    - "!getUsers"
+    - "!updateUsers"
+    - "!deleteUsers"
+    - "!helloWorld"
+    - "!dist"
+    - "!dist/**/*.js.map"
+    - "!.editorconfig"
+    - "!.env"
+    - "!.env.example"
+    - "!LICENSE"
+    - "!package-lock.json"
+    - "!package.json"
+    - "!README.md"
+    - "!serverless.yml"
+    - "!tsconfig.json"
+    - "!requirements-dev.txt"
+    - "!docker-compose.yml"
+
+functions:
+  createUsers:
+    handler: dist/createUsers/handler.createUsers
+    name: createUsers
+    description: Create users function with typescript
+    package:
+      patterns:
+        - "dist/createUsers/**/*.js"
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users
+          method: POST
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+  getUsers:
+    handler: dist/getUsers/handler.getUsers
+    name: getUsers
+    description: Get users function with typescript
+    package:
+      patterns:
+        - "dist/getUsers/**/*.js"
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users/{id}
+          method: GET
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+  updateUsers:
+    handler: dist/updateUsers/handler.updateUsers
+    name: updateUsers
+    description: Create users function with typescript
+    package:
+      patterns:
+        - "dist/updateUsers/**/*.js"
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users/{id}
+          method: PUT
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+  deleteUsers:
+    handler: dist/deleteUsers/handler.deleteUsers
+    name: deleteUsers
+    description: Delete users function with typescript
+    package:
+      patterns:
+        - "dist/deleteUsers/**/*.js"
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users/{id}
+          method: DELETE
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+
+resources:
+  Resources:
+    UsersDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Users
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        SSESpecification:
+          SSEEnabled: true
