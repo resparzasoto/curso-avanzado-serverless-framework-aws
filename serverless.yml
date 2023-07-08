@@ -1,4 +1,4 @@
-service: crud-serverless-users
+service: curso-avanzado-serverless-framework-aws
 
 frameworkVersion: "3"
 
@@ -10,7 +10,7 @@ provider:
   name: aws
   stage: dev
   region: us-east-1
-  runtime: nodejs16.x
+  runtime: nodejs18.x
   iam:
     role:
       statements:
@@ -77,12 +77,15 @@ functions:
       patterns:
         - "dist/createUsers/**/*.js"
     memorySize: 128
-    runtime: nodejs16.x
-    timeout: 10
+    runtime: nodejs18.x
+    timeout: 15
     events:
       - http:
           path: users
           method: POST
+          request:
+            schemas:
+              application/json: ${file(./schemas/createUserRequestSchema.json)}
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
   getUsers:
@@ -93,12 +96,16 @@ functions:
       patterns:
         - "dist/getUsers/**/*.js"
     memorySize: 128
-    runtime: nodejs16.x
-    timeout: 10
+    runtime: nodejs18.x
+    timeout: 15
     events:
       - http:
           path: users/{id}
           method: GET
+          request:
+            parameters:
+              paths:
+                id: true
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
   updateUsers:
@@ -109,12 +116,18 @@ functions:
       patterns:
         - "dist/updateUsers/**/*.js"
     memorySize: 128
-    runtime: nodejs16.x
-    timeout: 10
+    runtime: nodejs18.x
+    timeout: 15
     events:
       - http:
           path: users/{id}
           method: PUT
+          request:
+            parameters:
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(./schemas/updateUserRequestSchema.json)}
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
   deleteUsers:
@@ -125,12 +138,16 @@ functions:
       patterns:
         - "dist/deleteUsers/**/*.js"
     memorySize: 128
-    runtime: nodejs16.x
-    timeout: 10
+    runtime: nodejs18.x
+    timeout: 15
     events:
       - http:
           path: users/{id}
           method: DELETE
+          request:
+            parameters:
+              paths:
+                id: true
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "createUserRequest",
+  "description": "A create user request",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Name of the User",
+      "type": "string"
+    },
+    "email": {
+      "description": "Email of the User",
+      "type": "string",
+      "format": "email"
+    },
+    "age": {
+      "description": "Age of the User",
+      "type": "integer",
+      "minimum": 18
+    }
+  },
+  "required": ["name", "email", "age"]
+}

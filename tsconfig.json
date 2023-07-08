@@ -5,7 +5,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2016"],
+    "lib": ["ES2022"],
     "module": "CommonJS",
     "moduleResolution": "node",
     "noFallthroughCasesInSwitch": true,
@@ -21,12 +21,12 @@
     "strict": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "ES2016"
+    "target": "ES2022"
   },
   "exclude": [
     "node_modules/**/*",
     ".serverless/**/*",
     ".vscode/**/*"
   ],
-  "include": ["createUsers/**/*.ts", "getUsers/**/*.ts", "updateUsers/**/*.ts", "deleteUsers/**/*.ts"]
+  "include": ["**/*.ts"]
 }

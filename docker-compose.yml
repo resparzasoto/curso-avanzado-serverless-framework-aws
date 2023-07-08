@@ -8,8 +8,8 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - crud-serverless-users:/home/dynamodblocal/db
+      - curso-avanzado-serverless-framework-aws:/home/dynamodblocal/db
 
 volumes:
-  crud-serverless-users:
+  curso-avanzado-serverless-framework-aws:
     driver: local

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "updateUserRequest",
+  "description": "A update user request",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Id of the User",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "name": {
+      "description": "Name of the User",
+      "type": "string"
+    },
+    "email": {
+      "description": "Email of the User",
+      "type": "string",
+      "format": "email"
+    },
+    "age": {
+      "description": "Age of the User",
+      "type": "integer",
+      "minimum": 18
+    }
+  },
+  "required": ["id", "name", "email", "age"]
+}
