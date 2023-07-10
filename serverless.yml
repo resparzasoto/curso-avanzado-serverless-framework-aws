@@ -25,6 +25,10 @@ provider:
           Resource: !GetAtt UsersDynamoDBTable.Arn
 
 custom:
+  config:
+    stage: ${opt:stage, 'dev'}
+    region: ${opt:region, 'us-east-1'}
+
   dynamodb:
     stages:
       - dev
@@ -166,3 +170,27 @@ resources:
           KeyType: HASH
         SSESpecification:
           SSEEnabled: true
+    S3Bucket:
+      Type: "AWS::S3::Bucket"
+      DeletionPolicy: Retain
+      Properties:
+        BucketName: !Sub "s3-bucket-${AWS::AccountId}-${self:custom.config.region}-${self:custom.config.stage}"
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+    S3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Action:
+                - "s3:GetObject"
+              Effect: Allow
+              Resource: !Join
+                - ""
+                - - "arn:aws:s3:::"
+                  - !Ref S3Bucket
+                  - /*
+              Principal: "*"
