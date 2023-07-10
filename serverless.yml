@@ -3,7 +3,7 @@ service: curso-avanzado-serverless-framework-aws
 frameworkVersion: "3"
 
 plugins:
-  - serverless-dynamodb-local
+  - serverless-dynamodb
   - serverless-offline
 
 provider:
@@ -23,13 +23,22 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource: !GetAtt UsersDynamoDBTable.Arn
+        - Effect: Allow
+          Action:
+            - s3:putObject
+          Resource:
+            Fn::Join:
+            - ""
+            - - !GetAtt S3Bucket.Arn
+              - /public
+              - /*
 
 custom:
   config:
     stage: ${opt:stage, 'dev'}
     region: ${opt:region, 'us-east-1'}
 
-  dynamodb:
+  serverless-dynamodb:
     stages:
       - dev
     start:
@@ -38,7 +47,7 @@ custom:
       inMemory: true
       migrate: true
       seed: true
-      noStart: true
+      noStart: false
     migration:
       dir: offline/migrations
     seed:
@@ -154,6 +163,26 @@ functions:
                 id: true
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+  signedUrl:
+    handler: dist/signedUrl/handler.signedUrl
+    name: signedUrl
+    description: Obtain signedUrl to upload s3 bucket object
+    package:
+      patterns:
+        - "dist/signedUrl/**/*.js"
+    memorySize: 128
+    runtime: nodejs18.x
+    timeout: 15
+    events:
+      - http:
+          path: signedUrl
+          method: GET
+          request:
+            parameters:
+              querystrings:
+                filename: true
+    environment:
+      S3_BUCKET_NAME: !Ref S3Bucket
 
 resources:
   Resources:
@@ -172,7 +201,7 @@ resources:
           SSEEnabled: true
     S3Bucket:
       Type: "AWS::S3::Bucket"
-      DeletionPolicy: Retain
+      DeletionPolicy: Delete
       Properties:
         BucketName: !Sub "s3-bucket-${AWS::AccountId}-${self:custom.config.region}-${self:custom.config.stage}"
         PublicAccessBlockConfiguration:
@@ -192,5 +221,6 @@ resources:
                 - ""
                 - - "arn:aws:s3:::"
                   - !Ref S3Bucket
+                  - /public
                   - /*
               Principal: "*"
