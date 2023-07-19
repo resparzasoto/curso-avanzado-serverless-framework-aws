@@ -49,7 +49,7 @@ const deleteUsers = async (
     },
   };
 
-  console.info(`user to delete: ${id}`);
+  console.log(`user to delete: ${id}`);
 
   await ddbDocClient.send(new DeleteCommand(params));
 

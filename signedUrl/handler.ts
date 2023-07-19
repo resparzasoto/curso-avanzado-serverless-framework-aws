@@ -10,22 +10,29 @@ const signedUrl = async (
   event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  const { filename } = event.queryStringParameters!;
+  console.log('Received event:', JSON.stringify(event, null, 2));
 
-  const client = new S3Client({});
+  const { filename } = event.queryStringParameters!;
+  const s3Client = new S3Client({});
+
   const command = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET_NAME,
-    Key: `public/${filename}`,
+    Key: `uploads/${filename}`,
   });
-  const presignedUrl = await getSignedUrl(client, command, { expiresIn: 300 });
+  const presignedUrl = await getSignedUrl(s3Client, command, {
+    expiresIn: 300,
+  });
 
-  return {
+  const response = {
     statusCode: 200,
     body: JSON.stringify({
       message: `${filename} presigned url generated`,
       url: `${presignedUrl}`,
     }),
   };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  return response;
 };
 
 export { signedUrl };

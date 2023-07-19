@@ -1,14 +1,14 @@
-import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Context,
-} from 'aws-lambda';
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
   PutCommandInput,
 } from '@aws-sdk/lib-dynamodb';
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  Context,
+} from 'aws-lambda';
 import { randomUUID } from 'crypto';
 
 let ddbClientConfig: DynamoDBClientConfig = {
@@ -49,7 +49,7 @@ const createUsers = async (
     Item: user,
   };
 
-  console.info(`user to create: ${JSON.stringify(params.Item)}`);
+  console.log(`user to create: ${JSON.stringify(params.Item)}`);
 
   await ddbDocClient.send(new PutCommand(params));
 

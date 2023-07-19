@@ -4,12 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf dist/ && tsc",
     "watch": "tsc --watch",
     "sls:offline:debug": "SLS_DEBUG=* && sls offline start --noTimeout",
-    "sls:package": "npm run sls:clean:package && npm run sls:build:package",
-    "sls:clean:package": "rimraf node_modules/ && rimraf dist/ rimraf .serverless/",
-    "sls:build:package": "npm ci && npm run build && sls package",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,9 +21,10 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.363.0",
-    "@aws-sdk/client-s3": "^3.367.0",
-    "@aws-sdk/lib-dynamodb": "^3.365.0",
-    "@aws-sdk/s3-request-presigner": "^3.367.0"
+    "@aws-sdk/client-dynamodb": "^3.370.0",
+    "@aws-sdk/client-s3": "^3.370.0",
+    "@aws-sdk/lib-dynamodb": "^3.370.0",
+    "@aws-sdk/s3-request-presigner": "^3.370.0",
+    "sharp": "^0.32.2"
   }
 }

@@ -25,12 +25,11 @@ provider:
           Resource: !GetAtt UsersDynamoDBTable.Arn
         - Effect: Allow
           Action:
-            - s3:putObject
+            - s3:PutObject
           Resource:
             Fn::Join:
             - ""
             - - !GetAtt S3Bucket.Arn
-              - /public
               - /*
 
 custom:
@@ -183,6 +182,23 @@ functions:
                 filename: true
     environment:
       S3_BUCKET_NAME: !Ref S3Bucket
+  thumbnailGenerator:
+    handler: dist/thumbnail/handler.generator
+    name: thumbnail
+    description: Obtain thumbnail to upload s3 bucket object
+    package:
+      patterns:
+        - "dist/thumbnail/**/*.js"
+    memorySize: 128
+    runtime: nodejs18.x
+    timeout: 15
+    events:
+      - s3:
+          bucket: !Sub "public-bucket-${AWS::AccountId}-${self:custom.config.region}-${self:custom.config.stage}"
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: uploads/
 
 resources:
   Resources:
@@ -203,7 +219,7 @@ resources:
       Type: "AWS::S3::Bucket"
       DeletionPolicy: Delete
       Properties:
-        BucketName: !Sub "s3-bucket-${AWS::AccountId}-${self:custom.config.region}-${self:custom.config.stage}"
+        BucketName: !Sub "public-bucket-${AWS::AccountId}-${self:custom.config.region}-${self:custom.config.stage}"
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
@@ -215,12 +231,11 @@ resources:
           Version: "2012-10-17"
           Statement:
             - Action:
-                - "s3:GetObject"
+                - s3:GetObject
               Effect: Allow
               Resource: !Join
                 - ""
                 - - "arn:aws:s3:::"
                   - !Ref S3Bucket
-                  - /public
                   - /*
               Principal: "*"
