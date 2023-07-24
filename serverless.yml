@@ -11,6 +11,7 @@ provider:
   stage: dev
   region: us-east-1
   runtime: nodejs18.x
+  architecture: x86_64
   iam:
     role:
       statements:
@@ -58,27 +59,7 @@ custom:
 package:
   individually: true
   patterns:
-    - "!.venv"
-    - "!.vscode"
-    - "!dynamodb"
-    - "!createUsers"
-    - "!getUsers"
-    - "!updateUsers"
-    - "!deleteUsers"
-    - "!helloWorld"
-    - "!dist"
-    - "!dist/**/*.js.map"
-    - "!.editorconfig"
-    - "!.env"
-    - "!.env.example"
-    - "!LICENSE"
-    - "!package-lock.json"
-    - "!package.json"
-    - "!README.md"
-    - "!serverless.yml"
-    - "!tsconfig.json"
-    - "!requirements-dev.txt"
-    - "!docker-compose.yml"
+    - "!**"
 
 functions:
   createUsers:
@@ -87,7 +68,9 @@ functions:
     description: Create users function with typescript
     package:
       patterns:
-        - "dist/createUsers/**/*.js"
+        - dist/createUsers/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -106,7 +89,9 @@ functions:
     description: Get users function with typescript
     package:
       patterns:
-        - "dist/getUsers/**/*.js"
+        - dist/getUsers/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -126,7 +111,9 @@ functions:
     description: Create users function with typescript
     package:
       patterns:
-        - "dist/updateUsers/**/*.js"
+        - dist/updateUsers/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -148,7 +135,9 @@ functions:
     description: Delete users function with typescript
     package:
       patterns:
-        - "dist/deleteUsers/**/*.js"
+        - dist/deleteUsers/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -168,7 +157,9 @@ functions:
     description: Obtain signedUrl to upload s3 bucket object
     package:
       patterns:
-        - "dist/signedUrl/**/*.js"
+        - dist/signedUrl/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -188,7 +179,9 @@ functions:
     description: Obtain thumbnail to upload s3 bucket object
     package:
       patterns:
-        - "dist/thumbnail/**/*.js"
+        - dist/thumbnail/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
     memorySize: 128
     runtime: nodejs18.x
     timeout: 15
@@ -199,6 +192,18 @@ functions:
           existing: true
           rules:
             - prefix: uploads/
+
+layers:
+  base:
+    name: prd-dependencies
+    description: layer for nodejs prd dependencies
+    licenseInfo: MIT
+    compatibleRuntimes:
+      - nodejs18.x
+    compatibleArchitectures:
+      - x86_64
+    package:
+      artifact: nodejs-layer.zip
 
 resources:
   Resources:
