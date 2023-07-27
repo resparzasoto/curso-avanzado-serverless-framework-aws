@@ -59,7 +59,7 @@ custom:
 package:
   individually: true
   patterns:
-    - "!**"
+    - '!.*/**'
 
 functions:
   createUsers:

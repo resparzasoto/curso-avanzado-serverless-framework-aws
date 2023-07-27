@@ -1,0 +1,100 @@
+name: Serverless Deploy
+
+on:
+  release:
+    types: released
+
+jobs:
+  build-js-layer-deps:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    name: build lambda layer
+    container:
+      image: node:18-buster
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: upgrade tools
+      run: apt update -y && apt install zip -y
+
+    - name: npm install dependencies
+      if: steps.cached-npm-dependencies.outputs.cache-hit != 'true'
+      run: npm ci
+      env:
+        NODE_ENV: production
+
+    - name: create nodejs lambda layer
+      run: |
+        mkdir nodejs/
+        mv node_modules/ nodejs/
+        zip -r nodejs-layer.zip nodejs/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: nodejs-layer
+        path: nodejs-layer.zip
+
+  testing-changes:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    needs: [build-js-layer-deps]
+    name: build test
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: npm install dependencies
+      if: steps.cached-npm-dependencies.outputs.cache-hit != 'true'
+      run: npm install
+
+    - name: python install dependencies
+      run: pip install -r requirements.txt
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: nodejs-layer
+        path: ./
+
+    - name: run serverless package
+      run: npx serverless package
+      env:
+        AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+        AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+
+    - name: run cloudformation lint
+      run: cfn-lint .serverless/cloudformation-template-update-stack.json --ignore-checks W
+
+    - name: run tests
+      run: npm run test
+
+  deploy-env:
+    name: serverless deploy
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    needs: [build-js-layer-deps, testing-changes]
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: npm cache
+      id: cached-npm-dependencies
+      uses: actions/cache@v2
+      with:
+        path: node_modules
+        key: npm-${{ runner.os }}-${{ hashFiles('**/package.json') }}
+
+    - name: npm install dependencies
+      if: steps.cached-npm-dependencies.outputs.cache-hit != 'true'
+      run: npm install
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: nodejs-layer
+        path: ./
+
+    - name: build
+      run: npm run build
+
+    - name: deploy
+      run: npx serverless deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+        AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
