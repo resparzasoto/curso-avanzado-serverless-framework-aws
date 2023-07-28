@@ -12,6 +12,9 @@ provider:
   region: us-east-1
   runtime: nodejs18.x
   architecture: x86_64
+  apiGateway:
+    apiKeys:
+      - curso-avanzado-serverless-framework-aws-api-key
   iam:
     role:
       statements:
@@ -59,7 +62,19 @@ custom:
 package:
   individually: true
   patterns:
+    - '!*.*'
     - '!.*/**'
+    - '!dist/**'
+    - '!createUsers/**'
+    - '!deleteUsers/**'
+    - '!dynamodb/**'
+    - '!getUsers/**'
+    - '!helloWorld/**'
+    - '!schemas/**'
+    - '!signedUrl/**'
+    - '!thumbnail/**'
+    - '!updateUsers/**'
+
 
 functions:
   createUsers:
@@ -97,6 +112,7 @@ functions:
     timeout: 15
     events:
       - http:
+          private: true
           path: users/{id}
           method: GET
           request:

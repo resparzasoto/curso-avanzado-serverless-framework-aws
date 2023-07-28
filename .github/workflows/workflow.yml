@@ -1,8 +1,9 @@
 name: Serverless Deploy
 
 on:
-  release:
-    types: released
+  push:
+    branches:
+      - master
 
 jobs:
   build-js-layer-deps:
