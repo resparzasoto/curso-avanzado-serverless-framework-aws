@@ -35,6 +35,8 @@ provider:
             - ""
             - - !GetAtt S3Bucket.Arn
               - /*
+  environment:
+    SECRET_EGG: ${ssm:/SECRET_EGG}
 
 custom:
   config:
@@ -62,7 +64,7 @@ custom:
 package:
   individually: true
   patterns:
-    - '!*.*'
+    - '!*'
     - '!.*/**'
     - '!dist/**'
     - '!createUsers/**'
@@ -74,7 +76,6 @@ package:
     - '!signedUrl/**'
     - '!thumbnail/**'
     - '!updateUsers/**'
-
 
 functions:
   createUsers:
@@ -98,6 +99,7 @@ functions:
               application/json: ${file(./schemas/createUserRequestSchema.json)}
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+
   getUsers:
     handler: dist/getUsers/handler.getUsers
     name: getUsers
@@ -121,6 +123,7 @@ functions:
                 id: true
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+
   updateUsers:
     handler: dist/updateUsers/handler.updateUsers
     name: updateUsers
@@ -145,6 +148,7 @@ functions:
               application/json: ${file(./schemas/updateUserRequestSchema.json)}
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+
   deleteUsers:
     handler: dist/deleteUsers/handler.deleteUsers
     name: deleteUsers
@@ -167,6 +171,7 @@ functions:
                 id: true
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+
   signedUrl:
     handler: dist/signedUrl/handler.signedUrl
     name: signedUrl
@@ -189,6 +194,7 @@ functions:
                 filename: true
     environment:
       S3_BUCKET_NAME: !Ref S3Bucket
+
   thumbnailGenerator:
     handler: dist/thumbnail/handler.generator
     name: thumbnail
@@ -236,6 +242,7 @@ resources:
           KeyType: HASH
         SSESpecification:
           SSEEnabled: true
+
     S3Bucket:
       Type: "AWS::S3::Bucket"
       DeletionPolicy: Delete
@@ -244,6 +251,7 @@ resources:
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
+
     S3BucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
