@@ -13,32 +13,32 @@ import util from 'util';
 const s3 = new S3Client({});
 
 const generator = async (event: S3CreateEvent, _context: Context) => {
-  console.log(
+  console.info(
     'Reading options from event:\n',
     util.inspect(event, { depth: 5 })
   );
 
   const srcBucket = event.Records[0].s3.bucket.name;
-  console.log('srcBucket:', event.Records[0].s3.bucket.name);
+  console.info('srcBucket:', event.Records[0].s3.bucket.name);
 
   const srcKey = decodeURIComponent(
     event.Records[0].s3.object.key.replace(/\+/g, ' ')
   );
-  console.log('srcKey:', srcKey);
+  console.info('srcKey:', srcKey);
 
   const typeMatch = srcKey.match(/\.([^.]*)$/);
   if (!typeMatch) {
-    console.log('Could not determine the image type.');
+    console.info('Could not determine the image type.');
     return;
   }
-  console.log('typeMatch:', typeMatch[1]);
+  console.info('typeMatch:', typeMatch[1]);
 
   const imageType = typeMatch[1].toLowerCase();
   if (imageType !== 'jpg' && imageType !== 'png') {
-    console.log(`Unsupported image type: ${imageType}`);
+    console.info(`Unsupported image type: ${imageType}`);
     return;
   }
-  console.log('imageType:', imageType);
+  console.info('imageType:', imageType);
 
   let contentBuffer = null;
   try {
@@ -48,7 +48,7 @@ const generator = async (event: S3CreateEvent, _context: Context) => {
     };
 
     const originImage = await s3.send(new GetObjectCommand(params));
-    console.log('originImage:', originImage);
+    console.info('originImage:', originImage);
 
     if (!(originImage.Body instanceof Readable)) {
       throw new Error('Unknown object stream type');
@@ -56,7 +56,7 @@ const generator = async (event: S3CreateEvent, _context: Context) => {
 
     contentBuffer = await originImage.Body.transformToByteArray();
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return;
   }
 
@@ -75,14 +75,14 @@ const resize = async (
 ) => {
   const filename = fileKey.split('/')[1];
   const destKey = `resized/${newSize}-${filename}`;
-  console.log('filename:', filename);
-  console.log('destKey:', destKey);
+  console.info('filename:', filename);
+  console.info('destKey:', destKey);
 
   let buffer = null;
   try {
     buffer = await sharp(imgBody).resize(newSize).toBuffer();
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return;
   }
 
@@ -93,15 +93,15 @@ const resize = async (
       Body: buffer,
       ContentType: 'image',
     };
-    console.log('destParams:', JSON.stringify(destParams));
+    console.info('destParams:', JSON.stringify(destParams));
 
     await s3.send(new PutObjectCommand(destParams));
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return;
   }
 
-  console.log(
+  console.info(
     `Successfully resized ${destBucket} / ${fileKey} and uploaded to ${destBucket} / ${destKey}`
   );
 };

@@ -35,8 +35,6 @@ provider:
             - ""
             - - !GetAtt S3Bucket.Arn
               - /*
-  environment:
-    SECRET_EGG: ${ssm:/SECRET_EGG}
 
 custom:
   config:
@@ -78,13 +76,29 @@ package:
     - '!updateUsers/**'
 
 functions:
+  customAuthorizer:
+    handler: dist/customAuthorizer/handler.authorizer
+    name: customAuthorizer
+    description: JWT custom authorizer function
+    package:
+      patterns:
+        - dist/customAuthorizer/**/*.js
+    layers:
+      - !Ref BaseLambdaLayer
+    memorySize: 128
+    runtime: nodejs18.x
+    timeout: 15
+    environment:
+      JWT_SECRET: ${ssm:JWT_SECRET}
+
   createUsers:
     handler: dist/createUsers/handler.createUsers
     name: createUsers
-    description: Create users function with typescript
+    description: Create users function
     package:
       patterns:
         - dist/createUsers/**/*.js
+        - schemas/createUserRequestSchema.json
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -97,13 +111,18 @@ functions:
           request:
             schemas:
               application/json: ${file(./schemas/createUserRequestSchema.json)}
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 15
+            identitySource: method.request.header.Authorization
+            type: token
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 
   getUsers:
     handler: dist/getUsers/handler.getUsers
     name: getUsers
-    description: Get users function with typescript
+    description: Get users function
     package:
       patterns:
         - dist/getUsers/**/*.js
@@ -114,23 +133,28 @@ functions:
     timeout: 15
     events:
       - http:
-          private: true
           path: users/{id}
           method: GET
           request:
             parameters:
               paths:
                 id: true
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 15
+            identitySource: method.request.header.Authorization
+            type: token
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 
   updateUsers:
     handler: dist/updateUsers/handler.updateUsers
     name: updateUsers
-    description: Create users function with typescript
+    description: Update users function
     package:
       patterns:
         - dist/updateUsers/**/*.js
+        - schemas/updateUserRequestSchema.json
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -146,13 +170,18 @@ functions:
                 id: true
             schemas:
               application/json: ${file(./schemas/updateUserRequestSchema.json)}
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 15
+            identitySource: method.request.header.Authorization
+            type: token
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 
   deleteUsers:
     handler: dist/deleteUsers/handler.deleteUsers
     name: deleteUsers
-    description: Delete users function with typescript
+    description: Delete users function
     package:
       patterns:
         - dist/deleteUsers/**/*.js
@@ -169,13 +198,18 @@ functions:
             parameters:
               paths:
                 id: true
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 15
+            identitySource: method.request.header.Authorization
+            type: token
     environment:
       USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 
   signedUrl:
     handler: dist/signedUrl/handler.signedUrl
     name: signedUrl
-    description: Obtain signedUrl to upload s3 bucket object
+    description: Obtain signedUrl to upload s3 bucket object function
     package:
       patterns:
         - dist/signedUrl/**/*.js
@@ -192,13 +226,18 @@ functions:
             parameters:
               querystrings:
                 filename: true
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 15
+            identitySource: method.request.header.Authorization
+            type: token
     environment:
       S3_BUCKET_NAME: !Ref S3Bucket
 
   thumbnailGenerator:
     handler: dist/thumbnail/handler.generator
     name: thumbnail
-    description: Obtain thumbnail to upload s3 bucket object
+    description: Obtain thumbnail to upload s3 bucket object function
     package:
       patterns:
         - dist/thumbnail/**/*.js
@@ -218,7 +257,7 @@ functions:
 layers:
   base:
     name: prd-dependencies
-    description: layer for nodejs prd dependencies
+    description: Layer with production dependencies for nodejs functions
     licenseInfo: MIT
     compatibleRuntimes:
       - nodejs18.x

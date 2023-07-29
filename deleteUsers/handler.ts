@@ -19,8 +19,8 @@ if (process.env.IS_OFFLINE) {
     region: 'localhost',
     endpoint: 'http://localhost:8000',
     credentials: {
-      accessKeyId: 'DUMMY_AWS_ACCESS_KEY_ID',
-      secretAccessKey: 'DUMMY_AWS_SECRET_ACCESS_KEY ',
+      accessKeyId: 'MockAccessKeyId',
+      secretAccessKey: 'MockSecretAccessKey',
     },
   };
   process.env.USERS_TABLE_NAME = 'Users';
@@ -49,7 +49,7 @@ const deleteUsers = async (
     },
   };
 
-  console.log(`user to delete: ${id}`);
+  console.info(`user to delete: ${id}`);
 
   await ddbDocClient.send(new DeleteCommand(params));
 

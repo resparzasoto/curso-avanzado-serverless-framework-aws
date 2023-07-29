@@ -10,7 +10,7 @@ const signedUrl = async (
   event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Received event:', JSON.stringify(event, null, 2));
+  console.info('Received event:', JSON.stringify(event, null, 2));
 
   const { filename } = event.queryStringParameters!;
   const s3Client = new S3Client({});
@@ -30,7 +30,7 @@ const signedUrl = async (
       url: `${presignedUrl}`,
     }),
   };
-  console.log('Response:', JSON.stringify(response, null, 2));
+  console.info('Response:', JSON.stringify(response, null, 2));
 
   return response;
 };
