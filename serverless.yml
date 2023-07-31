@@ -3,8 +3,16 @@ service: curso-avanzado-serverless-framework-aws
 frameworkVersion: "3"
 
 plugins:
-  - serverless-dynamodb
-  - serverless-offline
+  - serverless-apigateway-service-proxy
+  - serverless-lift
+  # - serverless-dynamodb
+  # - serverless-offline
+
+package:
+  individually: true
+  patterns:
+    - "!*/**"
+    - "!**"
 
 provider:
   name: aws
@@ -59,21 +67,38 @@ custom:
           - table: Users
             sources: [./dynamodb/offline/seeds/users.json]
 
-package:
-  individually: true
-  patterns:
-    - '!*'
-    - '!.*/**'
-    - '!dist/**'
-    - '!createUsers/**'
-    - '!deleteUsers/**'
-    - '!dynamodb/**'
-    - '!getUsers/**'
-    - '!helloWorld/**'
-    - '!schemas/**'
-    - '!signedUrl/**'
-    - '!thumbnail/**'
-    - '!updateUsers/**'
+  apiGatewayServiceProxies:
+    - sqs:
+        path: /like-user
+        method: post
+        queueName: likeQueue
+        cors: true
+        response:
+          template:
+            # `success` is used when the integration response is 200
+            success: |-
+              { "message": "accepted" }
+            # `clientError` is used when the integration response is 400
+            clientError: |-
+              { "message": "there is an error in your request" }
+            # `serverError` is used when the integration response is 500
+            serverError: |-
+              { "message": "there was an error handling your request" }
+
+constructs:
+    sqs-queue:
+        type: queue
+        batchSize: 1
+        worker:
+            handler: dist/likeUser/handler.likeUser
+            # reservedConcurrency: 1
+            package:
+              patterns:
+                - "dist/likeUser/**/*.js"
+        extensions:
+          queue:
+            Properties:
+              QueueName: likeQueue
 
 functions:
   customAuthorizer:
@@ -82,7 +107,7 @@ functions:
     description: JWT custom authorizer function
     package:
       patterns:
-        - dist/customAuthorizer/**/*.js
+        - "dist/customAuthorizer/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -97,8 +122,7 @@ functions:
     description: Create users function
     package:
       patterns:
-        - dist/createUsers/**/*.js
-        - schemas/createUserRequestSchema.json
+        - "dist/createUsers/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -125,7 +149,7 @@ functions:
     description: Get users function
     package:
       patterns:
-        - dist/getUsers/**/*.js
+        - "dist/getUsers/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -153,8 +177,7 @@ functions:
     description: Update users function
     package:
       patterns:
-        - dist/updateUsers/**/*.js
-        - schemas/updateUserRequestSchema.json
+        - "dist/updateUsers/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -184,7 +207,7 @@ functions:
     description: Delete users function
     package:
       patterns:
-        - dist/deleteUsers/**/*.js
+        - "dist/deleteUsers/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -212,7 +235,7 @@ functions:
     description: Obtain signedUrl to upload s3 bucket object function
     package:
       patterns:
-        - dist/signedUrl/**/*.js
+        - "dist/signedUrl/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
@@ -240,7 +263,7 @@ functions:
     description: Obtain thumbnail to upload s3 bucket object function
     package:
       patterns:
-        - dist/thumbnail/**/*.js
+        - "dist/thumbnail/**/*.js"
     layers:
       - !Ref BaseLambdaLayer
     memorySize: 128
